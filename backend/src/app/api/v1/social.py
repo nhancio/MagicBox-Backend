@@ -16,7 +16,7 @@ from app.db.models.social_account import SocialPlatform
 from app.db.models.social_post import PostStatus
 from app.dependencies.auth import get_current_user, require_project
 
-router = APIRouter(prefix="/social", tags=["Social Media"])
+router = APIRouter(prefix="/projects/{project_id}/social", tags=["Social Media"])
 
 
 # Request Schemas
@@ -53,6 +53,7 @@ class PublishToMultipleRequest(BaseModel):
 # Endpoints
 @router.post("/accounts/connect", status_code=status.HTTP_201_CREATED)
 def connect_account(
+    project_id: str,
     request: ConnectAccountRequest,
     current_user: User = Depends(get_current_user),
     current_project: Project = Depends(require_project),

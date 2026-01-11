@@ -12,11 +12,12 @@ from app.db.models.project import Project
 from app.db.models.agent import Agent
 from app.dependencies.auth import get_current_user, require_project
 
-router = APIRouter(prefix="/agents", tags=["Agents"])
+router = APIRouter(prefix="/projects/{project_id}/agents", tags=["Agents"])
 
 
 @router.get("/", response_model=List[dict])
 def list_agents(
+    project_id: str,
     current_user: User = Depends(get_current_user),
     current_project: Project = Depends(require_project),
     db: Session = Depends(get_db),
@@ -48,6 +49,7 @@ def list_agents(
 
 @router.get("/{agent_id}", response_model=dict)
 def get_agent(
+    project_id: str,
     agent_id: str,
     current_user: User = Depends(get_current_user),
     current_project: Project = Depends(require_project),

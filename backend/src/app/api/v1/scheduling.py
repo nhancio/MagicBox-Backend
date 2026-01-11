@@ -14,7 +14,7 @@ from app.services.scheduling_service import SchedulingService
 from app.db.models.social_account import SocialAccount
 from app.dependencies.auth import get_current_user, require_project
 
-router = APIRouter(prefix="/scheduling", tags=["Scheduling"])
+router = APIRouter(prefix="/projects/{project_id}/scheduling", tags=["Scheduling"])
 
 
 class SchedulePostRequest(BaseModel):
@@ -39,6 +39,7 @@ class RecurringScheduleRequest(BaseModel):
 
 @router.post("/schedule", status_code=status.HTTP_201_CREATED)
 def schedule_post(
+    project_id: str,
     request: SchedulePostRequest,
     current_user: User = Depends(get_current_user),
     current_project: Project = Depends(require_project),

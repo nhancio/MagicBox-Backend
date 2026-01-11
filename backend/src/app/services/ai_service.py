@@ -1,18 +1,23 @@
 ﻿"""
 AI Service - Content generation using Google Gemini API.
 Handles generation of posts, reels, videos, shorts, and other marketing content.
+Uses the new Google Genai SDK (from google import genai).
 """
 from typing import Optional, Dict, Any, List
 from app.config.settings import settings
 import json
+import time
+from pathlib import Path
 
-# Optional import for Gemini
+# Optional import for new Google Genai SDK
 try:
-    import google.generativeai as genai
+    from google import genai
+    from google.genai import types
     GEMINI_AVAILABLE = True
 except ImportError:
     GEMINI_AVAILABLE = False
     genai = None
+    types = None
 
 
 class AIService:
@@ -24,13 +29,12 @@ class AIService:
     def _get_client(cls):
         """Initialize and return Gemini client."""
         if not GEMINI_AVAILABLE:
-            raise ImportError("google-generativeai not installed. Install: pip install google-generativeai")
+            raise ImportError("google-genai not installed. Install: pip install google-genai")
         
         if cls._client is None:
             if not settings.GEMINI_API_KEY:
                 raise ValueError("GEMINI_API_KEY not configured in environment variables")
-            genai.configure(api_key=settings.GEMINI_API_KEY)
-            cls._client = genai.GenerativeModel('gemini-pro')
+            cls._client = genai.Client(api_key=settings.GEMINI_API_KEY)
         return cls._client
     
     @staticmethod
@@ -80,7 +84,11 @@ Generate:
 Format the response as JSON with keys: content, hashtags, caption, key_points, platform_optimized
 """
             
-            response = client.generate_content(prompt)
+            # Use gemini-3-pro-preview for text generation
+            response = client.models.generate_content(
+                model="gemini-3-pro-preview",
+                contents=prompt,
+            )
             content = response.text
             
             # Try to parse as JSON, fallback to plain text
@@ -105,7 +113,7 @@ Format the response as JSON with keys: content, hashtags, caption, key_points, p
                 "platform": platform,
                 "tone": tone,
                 "metadata": {
-                    "model": "gemini-pro",
+                    "model": "gemini-3-pro-preview",
                     "length": length,
                     "target_audience": target_audience
                 }
@@ -156,7 +164,11 @@ Format as JSON with:
 - call_to_action: Closing CTA
 """
             
-            response = client.generate_content(prompt)
+            # Use gemini-3-pro-preview for script generation
+            response = client.models.generate_content(
+                model="gemini-3-pro-preview",
+                contents=prompt,
+            )
             content = response.text
             
             try:
@@ -178,7 +190,7 @@ Format as JSON with:
                 "duration_seconds": duration_seconds,
                 "style": style,
                 "metadata": {
-                    "model": "gemini-pro",
+                    "model": "gemini-3-pro-preview",
                     "estimated_word_count": len(content.split())
                 }
             }
@@ -237,7 +249,11 @@ Format as JSON with:
 - timestamps: Array of key timestamps
 """
             
-            response = client.generate_content(prompt)
+            # Use gemini-3-pro-preview for video script generation
+            response = client.models.generate_content(
+                model="gemini-3-pro-preview",
+                contents=prompt,
+            )
             content = response.text
             
             try:
@@ -261,7 +277,7 @@ Format as JSON with:
                 "duration_minutes": duration_minutes,
                 "format": format,
                 "metadata": {
-                    "model": "gemini-pro",
+                    "model": "gemini-3-pro-preview",
                     "estimated_word_count": len(content.split())
                 }
             }
@@ -306,7 +322,11 @@ Format as JSON with:
 - categories: Object with category names and their hashtags
 """
             
-            response = client.generate_content(prompt)
+            # Use gemini-3-pro-preview for hashtag generation
+            response = client.models.generate_content(
+                model="gemini-3-pro-preview",
+                contents=prompt,
+            )
             content = response.text
             
             try:
@@ -383,7 +403,11 @@ Provide:
 Format as JSON with: optimized_content, recommendations, best_practices
 """
             
-            response = client.generate_content(prompt)
+            # Use gemini-3-pro-preview for content optimization
+            response = client.models.generate_content(
+                model="gemini-3-pro-preview",
+                contents=prompt,
+            )
             content_result = response.text
             
             try:

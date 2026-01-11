@@ -116,6 +116,17 @@ class ConversationService:
         db.add(message)
         db.commit()
         db.refresh(message)
+        
+        # Create embedding for the message (async, non-blocking)
+        try:
+            from app.services.embedding_service import EmbeddingService
+            # Only create embedding for user and assistant messages
+            if message.role in ["user", "assistant"] and message.content:
+                EmbeddingService.create_embedding_for_conversation_message(db, message.id)
+        except Exception as e:
+            # Don't fail message creation if embedding fails
+            print(f"Warning: Failed to create embedding for message {message.id}: {e}")
+        
         return message
 
     @staticmethod

@@ -1,10 +1,18 @@
-﻿\"\"\"
-File: \backend\app\workers\ai_worker.py
+﻿"""
+AI Worker entrypoint.
 
-Auto-generated boilerplate.
-DO NOT put business logic here blindly.
-Follow architecture documentation.
-\"\"\"
+Run (example):
+  celery -A app.celery_app.celery_app worker -Q ai -l info
+"""
 
-# TODO: Implement module logic
+from __future__ import annotations
+
+from app.celery_app import celery_app
+
+# Import tasks to ensure registration when worker starts
+from app.tasks import publishing_tasks, notification_tasks  # noqa: F401
+from app.events import consumer  # noqa: F401
+
+
+__all__ = ["celery_app"]
 

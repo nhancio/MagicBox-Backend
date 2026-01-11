@@ -14,11 +14,12 @@ from app.schemas.artifact import ArtifactCreate, ArtifactUpdate, ArtifactRead
 from app.db.models.artifact import ArtifactType, ArtifactStatus
 from app.dependencies.auth import get_current_user, require_project
 
-router = APIRouter(prefix="/artifacts", tags=["Artifacts"])
+router = APIRouter(prefix="/projects/{project_id}/artifacts", tags=["Artifacts"])
 
 
 @router.post("/", response_model=ArtifactRead, status_code=status.HTTP_201_CREATED)
 def create_artifact(
+    project_id: str,
     artifact_data: ArtifactCreate,
     current_user: User = Depends(get_current_user),
     current_project: Project = Depends(require_project),
@@ -41,23 +42,20 @@ def create_artifact(
 
 @router.get("/", response_model=List[ArtifactRead])
 def list_artifacts(
+    project_id: str,
     current_user: User = Depends(get_current_user),
     current_project: Project = Depends(require_project),
-    project_id: Optional[str] = None,
     artifact_type: Optional[ArtifactType] = None,
     status: Optional[ArtifactStatus] = None,
     skip: int = 0,
     limit: int = 100,
     db: Session = Depends(get_db),
 ):
-    """List artifacts for the current tenant. Requires authentication and a project."""
-    # Use current project if project_id not specified
-    if not project_id:
-        project_id = current_project.id
+    """List artifacts for the current project. Requires authentication and a project."""
     
     artifacts = ArtifactService.list_artifacts(
         db,
-        project_id=project_id,
+        project_id=current_project.id,
         artifact_type=artifact_type,
         status=status,
         skip=skip,
@@ -68,6 +66,7 @@ def list_artifacts(
 
 @router.get("/{artifact_id}", response_model=ArtifactRead)
 def get_artifact(
+    project_id: str,
     artifact_id: str,
     current_user: User = Depends(get_current_user),
     current_project: Project = Depends(require_project),
@@ -85,6 +84,7 @@ def get_artifact(
 
 @router.get("/{artifact_id}/versions", response_model=List[ArtifactRead])
 def get_artifact_versions(
+    project_id: str,
     artifact_id: str,
     current_user: User = Depends(get_current_user),
     current_project: Project = Depends(require_project),
@@ -97,6 +97,7 @@ def get_artifact_versions(
 
 @router.post("/{artifact_id}/versions", response_model=ArtifactRead, status_code=status.HTTP_201_CREATED)
 def create_artifact_version(
+    project_id: str,
     artifact_id: str,
     artifact_data: ArtifactUpdate,
     current_user: User = Depends(get_current_user),
@@ -116,6 +117,7 @@ def create_artifact_version(
 
 @router.patch("/{artifact_id}", response_model=ArtifactRead)
 def update_artifact(
+    project_id: str,
     artifact_id: str,
     artifact_data: ArtifactUpdate,
     current_user: User = Depends(get_current_user),
@@ -134,6 +136,7 @@ def update_artifact(
 
 @router.post("/{artifact_id}/publish", response_model=ArtifactRead)
 def publish_artifact(
+    project_id: str,
     artifact_id: str,
     current_user: User = Depends(get_current_user),
     current_project: Project = Depends(require_project),

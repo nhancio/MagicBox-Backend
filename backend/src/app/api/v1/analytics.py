@@ -19,11 +19,12 @@ from app.db.models.artifact import Artifact
 from app.dependencies.auth import get_current_user, require_project
 
 
-router = APIRouter(prefix="/analytics", tags=["Analytics"])
+router = APIRouter(prefix="/projects/{project_id}/analytics", tags=["Analytics"])
 
 
 @router.get("/overview")
 def analytics_overview(
+    project_id: str,
     days: int = 30,
     current_user: User = Depends(get_current_user),
     current_project: Project = Depends(require_project),
@@ -118,6 +119,7 @@ def analytics_overview(
 
 @router.get("/top-content")
 def analytics_top_content(
+    project_id: str,
     limit: int = 10,
     current_user: User = Depends(get_current_user),
     current_project: Project = Depends(require_project),

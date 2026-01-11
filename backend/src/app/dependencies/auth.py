@@ -1,7 +1,7 @@
 """
 Authentication and authorization dependencies for FastAPI endpoints.
 """
-from fastapi import Depends, HTTPException, status, Header
+from fastapi import Depends, HTTPException, status, Header, Query, Request
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials, APIKeyHeader
 from sqlalchemy.orm import Session
 from jose import jwt, JWTError
@@ -120,51 +120,36 @@ def get_current_user_optional(
 
 
 def require_project(
+    project_id: str,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
-    project_id: Optional[str] = None,
 ) -> Project:
     """
-    Require that the user has at least one project.
-    If project_id is provided, verify the user has access to it.
-    Returns the project or raises 403 if no project exists.
+    Require that the user has a project to access the application.
+    Project ID is extracted from the URL path: /api/projects/{project_id}/...
+    
+    Returns the project or raises 404 if not found.
     """
     tenant_id = current_user.tenant_id
     
-    # If project_id is provided, verify it belongs to the user's tenant
-    if project_id:
-        project = db.query(Project).filter(
-            Project.id == project_id,
-            Project.tenant_id == tenant_id,
-            Project.is_active == True
-        ).first()
-        
-        if not project:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="Project not found or you don't have access to it"
-            )
-        
-        return project
+    if not project_id:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Project ID is required in the URL path. Format: /api/projects/{project_id}/..."
+        )
     
-    # Otherwise, check if user has any project
+    # Verify project belongs to the user's tenant
     project = db.query(Project).filter(
+        Project.id == project_id,
         Project.tenant_id == tenant_id,
         Project.is_active == True
     ).first()
     
     if not project:
-        # Auto-create a default project for the user
-        default_project = Project(
-            tenant_id=tenant_id,
-            name=f"{current_user.name}'s Project",
-            description="Default project",
-            created_by=current_user.id,
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Project not found or you don't have access to it. Please create a project first at /api/projects/"
         )
-        db.add(default_project)
-        db.commit()
-        db.refresh(default_project)
-        return default_project
     
     return project
 

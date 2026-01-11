@@ -1,10 +1,13 @@
-﻿\"\"\"
-File: \backend\app\workers\celery_app.py
+﻿"""
+Celery worker compatibility module.
 
-Auto-generated boilerplate.
-DO NOT put business logic here blindly.
-Follow architecture documentation.
-\"\"\"
+Some deployment tools expect celery app at app.workers.celery_app:celery_app.
+We re-export the main celery_app here.
+"""
 
-# TODO: Implement module logic
+from __future__ import annotations
+
+from app.celery_app import celery_app
+
+__all__ = ["celery_app"]
 

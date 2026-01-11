@@ -14,7 +14,7 @@ from app.services.chat_content_service import ChatContentService
 from app.services.credit_service import CreditService
 from app.dependencies.auth import get_current_user, require_project
 
-router = APIRouter(prefix="/chat", tags=["Chat Content"])
+router = APIRouter(prefix="/projects/{project_id}/chat", tags=["Chat Content"])
 
 
 class ChatMessageRequest(BaseModel):
@@ -25,6 +25,7 @@ class ChatMessageRequest(BaseModel):
 
 @router.post("/message", status_code=status.HTTP_200_OK)
 def send_chat_message(
+    project_id: str,
     request: ChatMessageRequest,
     current_user: User = Depends(get_current_user),
     current_project: Project = Depends(require_project),

@@ -13,7 +13,7 @@ from app.db.models.project import Project
 from app.services.credit_service import CreditService
 from app.dependencies.auth import get_current_user, require_project
 
-router = APIRouter(prefix="/credits", tags=["Credits"])
+router = APIRouter(prefix="/projects/{project_id}/credits", tags=["Credits"])
 
 
 class AddCreditsRequest(BaseModel):
@@ -23,6 +23,7 @@ class AddCreditsRequest(BaseModel):
 
 @router.get("/balance")
 def get_balance(
+    project_id: str,
     current_user: User = Depends(get_current_user),
     current_project: Project = Depends(require_project),
     db: Session = Depends(get_db),

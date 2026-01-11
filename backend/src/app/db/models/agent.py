@@ -34,4 +34,5 @@ class Agent(Base):
     
     # Relationships
     tenant = relationship("Tenant", back_populates="agents", lazy="select")
+    projects = relationship("ProjectAgent", back_populates="agent", cascade="all, delete-orphan")
 

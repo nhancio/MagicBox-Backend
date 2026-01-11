@@ -27,6 +27,8 @@ from app.db.models.oauth_state import OAuthState
 from app.db.models.activity_timeline import ActivityTimeline, ActivityType
 from app.db.models.event import Event, EventType, EventStatus
 from app.db.models.error_log import ErrorLog, ErrorSeverity
+from app.db.models.connector import Connector, ConnectorType, ConnectorStatus
+from app.db.models.project_agent import ProjectAgent
 
 __all__ = [
     # Core
@@ -77,5 +79,11 @@ __all__ = [
     "EventStatus",
     "ErrorLog",
     "ErrorSeverity",
+    # Connectors
+    "Connector",
+    "ConnectorType",
+    "ConnectorStatus",
+    # Project-Agent relationships
+    "ProjectAgent",
 ]
 

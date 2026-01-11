@@ -52,3 +52,28 @@ def decrypt_token(value: Optional[str]) -> Optional[str]:
         # If the key rotated or token isn't Fernet, return as-is to avoid hard crashes in dev.
         return value
 
+
+class EncryptionService:
+    """Service class wrapper for encryption utilities."""
+    
+    @staticmethod
+    def encrypt(data: str) -> str:
+        """Encrypt a string using Fernet."""
+        result = encrypt_token(data)
+        if result is None:
+            return data
+        return result
+    
+    @staticmethod
+    def decrypt(encrypted_data: str) -> str:
+        """Decrypt a string using Fernet."""
+        result = decrypt_token(encrypted_data)
+        if result is None:
+            return encrypted_data
+        return result
+    
+    @staticmethod
+    def generate_key() -> str:
+        """Generate a new Fernet key."""
+        return Fernet.generate_key().decode("utf-8")
+

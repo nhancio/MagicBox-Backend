@@ -27,7 +27,8 @@ requests>=2.31.0
 # AI Services
 openai>=1.10.0
 tiktoken>=0.6.0
-google-generativeai>=0.3.0
+google-genai>=0.1.0  # New Google Genai SDK (replaces google-generativeai)
+pillow>=10.0.0  # For image handling in AI image generation
 
 # Google APIs (for YouTube integration)
 google-auth>=2.23.0

@@ -20,11 +20,12 @@ from app.schemas.conversation import (
 )
 from app.dependencies.auth import get_current_user, require_project
 
-router = APIRouter(prefix="/conversations", tags=["Conversations"])
+router = APIRouter(prefix="/projects/{project_id}/conversations", tags=["Conversations"])
 
 
 @router.post("/", response_model=ConversationRead, status_code=status.HTTP_201_CREATED)
 def create_conversation(
+    project_id: str,
     conversation_data: ConversationCreate,
     current_user: User = Depends(get_current_user),
     current_project: Project = Depends(require_project),
@@ -47,26 +48,23 @@ def create_conversation(
 
 @router.get("/", response_model=List[ConversationRead])
 def list_conversations(
+    project_id: str,
     current_user: User = Depends(get_current_user),
     current_project: Project = Depends(require_project),
-    project_id: Optional[str] = None,
     skip: int = 0,
     limit: int = 100,
     db: Session = Depends(get_db),
 ):
-    """List conversations for the current tenant. Requires authentication and a project."""
-    # Use current project if project_id not specified
-    if not project_id:
-        project_id = current_project.id
-    
+    """List conversations for the current project. Requires authentication and a project."""
     conversations = ConversationService.list_conversations(
-        db, project_id=project_id, skip=skip, limit=limit
+        db, project_id=current_project.id, skip=skip, limit=limit
     )
     return conversations
 
 
 @router.get("/{conversation_id}", response_model=ConversationRead)
 def get_conversation(
+    project_id: str,
     conversation_id: str,
     current_user: User = Depends(get_current_user),
     current_project: Project = Depends(require_project),
@@ -84,6 +82,7 @@ def get_conversation(
 
 @router.get("/{conversation_id}/messages", response_model=List[ConversationMessageRead])
 def get_conversation_messages(
+    project_id: str,
     conversation_id: str,
     current_user: User = Depends(get_current_user),
     current_project: Project = Depends(require_project),
@@ -98,6 +97,7 @@ def get_conversation_messages(
 
 @router.post("/{conversation_id}/messages", response_model=ConversationMessageRead, status_code=status.HTTP_201_CREATED)
 def add_message(
+    project_id: str,
     conversation_id: str,
     message_data: ConversationMessageCreate,
     current_user: User = Depends(get_current_user),
@@ -117,6 +117,7 @@ def add_message(
 
 @router.patch("/{conversation_id}", response_model=ConversationRead)
 def update_conversation(
+    project_id: str,
     conversation_id: str,
     conversation_data: ConversationUpdate,
     current_user: User = Depends(get_current_user),
@@ -135,6 +136,7 @@ def update_conversation(
 
 @router.post("/{conversation_id}/archive", status_code=status.HTTP_204_NO_CONTENT)
 def archive_conversation(
+    project_id: str,
     conversation_id: str,
     current_user: User = Depends(get_current_user),
     current_project: Project = Depends(require_project),

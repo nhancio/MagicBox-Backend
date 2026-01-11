@@ -14,7 +14,7 @@ from app.services.ai_service import AIService
 from app.db.models.social_account import SocialPlatform
 from app.dependencies.auth import get_current_user, require_project
 
-router = APIRouter(prefix="/content", tags=["Content Generation"])
+router = APIRouter(prefix="/projects/{project_id}/content", tags=["Content Generation"])
 
 
 # Request Schemas
@@ -49,6 +49,7 @@ class OptimizeContentRequest(BaseModel):
 # Endpoints
 @router.post("/generate/post", status_code=status.HTTP_201_CREATED)
 def generate_post(
+    project_id: str,
     request: GeneratePostRequest,
     platform: str = "general",
     current_user: User = Depends(get_current_user),

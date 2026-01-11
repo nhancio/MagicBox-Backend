@@ -31,5 +31,6 @@ class Project(Base):
 
     # Relationships
     tenant = relationship("Tenant", back_populates="projects", lazy="select")
+    agents = relationship("ProjectAgent", back_populates="project", cascade="all, delete-orphan")
     # conversations = relationship("Conversation", back_populates="project")
     # artifacts = relationship("Artifact", back_populates="project")

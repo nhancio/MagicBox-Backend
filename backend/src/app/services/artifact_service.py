@@ -43,6 +43,17 @@ class ArtifactService:
         db.add(artifact)
         db.commit()
         db.refresh(artifact)
+        
+        # Create embedding for the artifact (async, non-blocking)
+        try:
+            from app.services.embedding_service import EmbeddingService
+            # Only create embedding if there's text content
+            if artifact.content or artifact.title:
+                EmbeddingService.create_embedding_for_artifact(db, artifact.id)
+        except Exception as e:
+            # Don't fail artifact creation if embedding fails
+            print(f"Warning: Failed to create embedding for artifact {artifact.id}: {e}")
+        
         return artifact
 
     @staticmethod

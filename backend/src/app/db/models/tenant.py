@@ -38,3 +38,4 @@ class Tenant(Base):
     activity_timeline = relationship("ActivityTimeline", back_populates="tenant")
     events = relationship("Event", back_populates="tenant")
     error_logs = relationship("ErrorLog", back_populates="tenant")
+    connectors = relationship("Connector", back_populates="tenant")
