@@ -11,6 +11,7 @@ from app.db.session import get_db
 from app.db.models.user import User
 from app.db.models.project import Project
 from app.services.scheduling_service import SchedulingService
+from app.db.models.social_account import SocialAccount
 from app.dependencies.auth import get_current_user, require_project
 
 router = APIRouter(prefix="/scheduling", tags=["Scheduling"])
@@ -166,6 +167,17 @@ def list_scheduled_posts(
             start_date=start_date,
             end_date=end_date,
         )
+
+        # Join account info for UI rendering
+        account_ids = list({p.social_account_id for p in posts})
+        accounts = (
+            db.query(SocialAccount)
+            .filter(SocialAccount.id.in_(account_ids))
+            .all()
+            if account_ids
+            else []
+        )
+        acc_map = {a.id: a for a in accounts}
         
         return {
             "success": True,
@@ -173,7 +185,11 @@ def list_scheduled_posts(
             "posts": [
                 {
                     "id": post.id,
-                    "content": post.content[:100] + "..." if len(post.content) > 100 else post.content,
+                    "social_account_id": post.social_account_id,
+                    "platform": acc_map.get(post.social_account_id).platform.value if acc_map.get(post.social_account_id) else None,
+                    "account_name": acc_map.get(post.social_account_id).account_name if acc_map.get(post.social_account_id) else None,
+                    "content": post.content,
+                    "media_urls": post.media_urls or [],
                     "scheduled_at": post.scheduled_at.isoformat() if post.scheduled_at else None,
                     "status": post.status.value,
                     "is_recurring": post.extra_metadata.get("is_recurring") if post.extra_metadata else False,

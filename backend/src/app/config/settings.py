@@ -31,6 +31,22 @@ class Settings(BaseSettings):
         default="",
         description="Google Gemini API key for AI content generation",
     )
+
+    # Public URLs (used for OAuth redirects)
+    BACKEND_PUBLIC_URL: str = Field(
+        default="http://localhost:8000",
+        description="Publicly reachable backend base URL (for OAuth redirect_uri)",
+    )
+    FRONTEND_PUBLIC_URL: str = Field(
+        default="http://localhost:8080",
+        description="Publicly reachable frontend base URL (for OAuth post-redirect)",
+    )
+
+    # Encryption (for storing OAuth tokens at rest)
+    ENCRYPTION_KEY: str = Field(
+        default="",
+        description="Fernet key (urlsafe base64) used to encrypt tokens at rest",
+    )
     
     # Social Media API Keys (will be stored per-tenant in database, but defaults here)
     FACEBOOK_APP_ID: str = Field(default="", description="Facebook App ID")
@@ -68,6 +84,8 @@ class Settings(BaseSettings):
                 raise ValueError("JWT_SECRET must be set in production")
             if self.DATABASE_URL.startswith("sqlite"):
                 raise ValueError("DATABASE_URL must not be sqlite in production")
+            if not self.ENCRYPTION_KEY:
+                raise ValueError("ENCRYPTION_KEY must be set in production")
 
 
 settings = Settings()

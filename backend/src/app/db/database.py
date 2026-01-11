@@ -14,7 +14,6 @@ BASE_DIR = Path(__file__).resolve().parents[3]
 load_dotenv(BASE_DIR / ".env")
 
 DATABASE_URL = os.getenv("DATABASE_URL")
-print("FASTAPI DATABASE_URL =", DATABASE_URL)
 
 if not DATABASE_URL:
     raise RuntimeError("DATABASE_URL not set")

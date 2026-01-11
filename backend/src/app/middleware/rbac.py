@@ -28,6 +28,10 @@ class RBACMiddleware(BaseHTTPMiddleware):
     }
     
     async def dispatch(self, request: Request, call_next):
+        # Skip CORS preflight requests (OPTIONS) - let CORS middleware handle
+        if request.method == "OPTIONS":
+            return await call_next(request)
+        
         # Check if role already set by AuthMiddleware
         role = get_context(CTX_ROLE)
         

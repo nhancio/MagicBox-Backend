@@ -15,6 +15,7 @@ from app.integrations.instagram import InstagramIntegration
 from app.integrations.linkedin import LinkedInIntegration
 from app.integrations.twitter import TwitterIntegration
 from app.integrations.tiktok import TikTokIntegration
+from app.security.encryption import encrypt_token, decrypt_token
 
 # YouTube integration (optional)
 try:
@@ -76,6 +77,9 @@ class SocialService:
         if not tenant_id or not user_id:
             raise ValueError("Tenant ID and User ID must be in request context")
         
+        enc_access = encrypt_token(access_token)
+        enc_refresh = encrypt_token(refresh_token) if refresh_token else None
+
         # Check if account already exists
         existing = db.query(SocialAccount).filter(
             SocialAccount.tenant_id == tenant_id,
@@ -85,8 +89,8 @@ class SocialService:
         
         if existing:
             # Update existing account
-            existing.access_token = access_token
-            existing.refresh_token = refresh_token
+            existing.access_token = enc_access
+            existing.refresh_token = enc_refresh
             existing.account_id = account_id
             existing.account_name = account_name
             existing.is_connected = True
@@ -105,13 +109,69 @@ class SocialService:
             platform=platform,
             account_name=account_name,
             account_id=account_id,
-            access_token=access_token,
-            refresh_token=refresh_token,
+            access_token=enc_access,
+            refresh_token=enc_refresh,
             is_connected=True,
             is_active=True,
             extra_metadata=metadata,
         )
         
+        db.add(account)
+        db.commit()
+        db.refresh(account)
+        return account
+
+    @staticmethod
+    def connect_account_for_tenant_user(
+        db: Session,
+        tenant_id: str,
+        user_id: str,
+        platform: SocialPlatform,
+        account_name: str,
+        access_token: str,
+        refresh_token: Optional[str] = None,
+        account_id: Optional[str] = None,
+        metadata: Optional[Dict[str, Any]] = None,
+    ) -> SocialAccount:
+        """
+        Same as connect_account(), but does NOT rely on request context.
+        Used by OAuth callback handlers (no JWT on callback).
+        """
+        enc_access = encrypt_token(access_token)
+        enc_refresh = encrypt_token(refresh_token) if refresh_token else None
+
+        existing = db.query(SocialAccount).filter(
+            SocialAccount.tenant_id == tenant_id,
+            SocialAccount.platform == platform,
+            SocialAccount.account_id == account_id
+        ).first()
+
+        if existing:
+            existing.access_token = enc_access
+            existing.refresh_token = enc_refresh
+            existing.account_id = account_id
+            existing.account_name = account_name
+            existing.is_connected = True
+            existing.is_active = True
+            existing.extra_metadata = metadata or existing.extra_metadata
+            existing.updated_at = datetime.utcnow()
+            db.commit()
+            db.refresh(existing)
+            return existing
+
+        account = SocialAccount(
+            id=str(uuid.uuid4()),
+            tenant_id=tenant_id,
+            user_id=user_id,
+            platform=platform,
+            account_name=account_name,
+            account_id=account_id,
+            access_token=enc_access,
+            refresh_token=enc_refresh,
+            is_connected=True,
+            is_active=True,
+            extra_metadata=metadata,
+        )
         db.add(account)
         db.commit()
         db.refresh(account)
@@ -230,28 +290,42 @@ class SocialService:
         if not integration_class:
             raise ValueError(f"No integration available for platform: {account.platform}")
         
+        # Decrypt tokens for use with external APIs
+        access_token = decrypt_token(account.access_token)
+        refresh_token = decrypt_token(account.refresh_token)
+
         # Initialize integration with access token
         if account.platform == SocialPlatform.YOUTUBE:
-            integration = integration_class(account.access_token, account.refresh_token)
+            integration = integration_class(access_token, refresh_token)
         elif account.platform == SocialPlatform.INSTAGRAM:
             # Instagram may need account_id from metadata
             account_id = account.extra_metadata.get("instagram_account_id") if account.extra_metadata else None
-            integration = integration_class(account.access_token, account_id)
+            integration = integration_class(access_token, account_id)
         elif account.platform == SocialPlatform.TIKTOK:
             advertiser_id = account.extra_metadata.get("advertiser_id") if account.extra_metadata else None
-            integration = integration_class(account.access_token, advertiser_id)
+            integration = integration_class(access_token, advertiser_id)
+        elif account.platform == SocialPlatform.FACEBOOK:
+            integration = integration_class(access_token)
         else:
-            integration = integration_class(account.access_token)
+            integration = integration_class(access_token)
         
         try:
             post.status = PostStatus.PUBLISHING
             db.commit()
             
             # Publish using integration
-            result = integration.publish_post(
-                content=post.content,
-                media_urls=post.media_urls or [],
-            )
+            if account.platform == SocialPlatform.FACEBOOK:
+                page_id = account.extra_metadata.get("page_id") if account.extra_metadata else None
+                result = integration.publish_post(
+                    content=post.content,
+                    media_urls=post.media_urls or [],
+                    page_id=page_id,
+                )
+            else:
+                result = integration.publish_post(
+                    content=post.content,
+                    media_urls=post.media_urls or [],
+                )
             
             # Update post with result
             post.status = PostStatus.PUBLISHED

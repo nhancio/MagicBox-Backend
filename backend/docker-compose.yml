@@ -8,6 +8,11 @@ services:
     depends_on:
       - rabbitmq
       - postgres
+    env_file:
+      - .env
+    environment:
+      # Force API to talk to the Postgres container when running via docker-compose
+      DATABASE_URL: postgresql+psycopg2://magicbox:magicbox@postgres:5432/magicbox
 
   rabbitmq:
     image: rabbitmq:3-management
@@ -16,7 +21,8 @@ services:
       - ""15672:15672""
 
   postgres:
-    image: postgres:15
+    # pgvector-enabled Postgres image (required for embeddings + semantic search)
+    image: pgvector/pgvector:pg15
     environment:
       POSTGRES_DB: magicbox
       POSTGRES_USER: magicbox

@@ -23,6 +23,7 @@ from app.db.models.credit_account import CreditAccount
 from app.db.models.credit_transaction import CreditTransaction
 from app.db.models.social_account import SocialAccount, SocialPlatform
 from app.db.models.social_post import SocialPost, PostStatus
+from app.db.models.oauth_state import OAuthState
 from app.db.models.activity_timeline import ActivityTimeline, ActivityType
 from app.db.models.event import Event, EventType, EventStatus
 from app.db.models.error_log import ErrorLog, ErrorSeverity
@@ -67,6 +68,7 @@ __all__ = [
     "SocialPlatform",
     "SocialPost",
     "PostStatus",
+    "OAuthState",
     # Audit & Events
     "ActivityTimeline",
     "ActivityType",

@@ -1,4 +1,5 @@
 ﻿from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.openapi.utils import get_openapi
 from app.api.v1.endpoints import api_router
 from app.db.database import SessionLocal
@@ -14,6 +15,25 @@ app = FastAPI(
     title="MagicBox Backend",
     version="1.0.0",
     description="AI-first, multi-tenant content creation platform",
+)
+
+# CORS configuration for frontend integration - updated
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "http://localhost:5173",  # Vite dev server
+        "http://localhost:8080",  # Vite alternative port
+        "http://localhost:3000",  # Alternative dev port
+        "http://127.0.0.1:5173",
+        "http://127.0.0.1:8080",
+        "http://127.0.0.1:3000",
+        "https://magicbox.nhancio.com",  # Production frontend
+        "https://*.netlify.app",  # Netlify preview deployments
+    ],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+    expose_headers=["*"],
 )
 
 
@@ -67,12 +87,14 @@ def custom_openapi():
 
 app.openapi = custom_openapi
 
-# Add middleware (order matters!)
-app.add_middleware(RequestContextMiddleware)  # Must be first - initialize context
-app.add_middleware(AuthMiddleware)  # Extract user/tenant/role from JWT
-app.add_middleware(TenantMiddleware)  # Resolve tenant context
-app.add_middleware(RBACMiddleware)  # Enforce RBAC
-app.add_middleware(RateLimitMiddleware)  # Rate limiting (last - after auth)
+# Add middleware - LAST added runs FIRST on request!
+# Desired order: RequestContext -> Auth -> Tenant -> RBAC -> RateLimit
+# So we add in REVERSE: RateLimit, RBAC, Tenant, Auth, RequestContext
+app.add_middleware(RateLimitMiddleware)  # Added 1st, runs LAST (closest to route)
+app.add_middleware(RBACMiddleware)  # Added 2nd, runs 4th
+app.add_middleware(TenantMiddleware)  # Added 3rd, runs 3rd
+app.add_middleware(AuthMiddleware)  # Added 4th, runs 2nd
+app.add_middleware(RequestContextMiddleware)  # Added 5th, runs FIRST (initialize context)
 
 # Include all API routes
 app.include_router(api_router)

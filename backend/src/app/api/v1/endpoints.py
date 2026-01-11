@@ -5,6 +5,8 @@ from app.api.v1.auth import router as auth_router
 from app.api.v1.conversations import router as conversations_router
 from app.api.v1.artifacts import router as artifacts_router
 from app.api.v1.agents import router as agents_router
+from app.api.v1.analytics import router as analytics_router
+from app.api.v1.social_oauth import router as social_oauth_router
 
 # New content and social routers
 try:
@@ -35,6 +37,8 @@ api_router.include_router(projects_router)
 api_router.include_router(conversations_router)
 api_router.include_router(artifacts_router)
 api_router.include_router(agents_router)
+api_router.include_router(analytics_router)
+api_router.include_router(social_oauth_router)
 
 # Content and social endpoints (require google-generativeai)
 if CONTENT_AVAILABLE:
