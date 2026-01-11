@@ -1,0 +1,124 @@
+[build-system]
+requires = ["setuptools>=65.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+# ---------------------------------------------------------
+# Project Metadata
+# ---------------------------------------------------------
+[project]
+name = "magicbox-backend"
+version = "0.1.0"
+description = "AI-first, multi-tenant content creation platform backend"
+authors = [
+    { name = "MagicBox Team" }
+]
+readme = "README.md"
+requires-python = ">=3.10"
+
+# ---------------------------------------------------------
+# Core Dependencies
+# ---------------------------------------------------------
+dependencies = [
+
+    # -----------------------------
+    # Web Framework
+    # -----------------------------
+    "fastapi>=0.110.0",
+    "uvicorn[standard]>=0.27.0",
+
+    # -----------------------------
+    # Configuration & Validation
+    # -----------------------------
+    "pydantic>=2.5.0",
+    "pydantic-settings>=2.1.0",
+    "python-dotenv>=1.0.1",
+
+    # -----------------------------
+    # Database (Postgres + pgvector)
+    # -----------------------------
+    "sqlalchemy>=2.0.25",
+    "psycopg2-binary>=2.9.9",
+    "alembic>=1.13.1",
+    "pgvector>=0.2.4",
+
+    # -----------------------------
+    # Auth & Security
+    # -----------------------------
+    "python-jose[cryptography]>=3.3.0",
+    "passlib[bcrypt]>=1.7.4",
+    "cryptography>=41.0.7",
+
+    # -----------------------------
+    # Background Jobs
+    # -----------------------------
+    "celery>=5.3.6",
+    "kombu>=5.3.4",
+
+    # -----------------------------
+    # HTTP / External APIs
+    # -----------------------------
+    "httpx>=0.26.0",
+    "requests>=2.31.0",
+
+    # -----------------------------
+    # AI / LLM
+    # -----------------------------
+    "openai>=1.10.0",              # LLM calls
+    "tiktoken>=0.6.0",             # token estimation
+
+    # -----------------------------
+    # Vector & Embeddings
+    # -----------------------------
+    "numpy>=1.26.3",
+
+    # -----------------------------
+    # Observability
+    # -----------------------------
+    "langfuse>=2.36.0",
+
+    # -----------------------------
+    # Utilities
+    # -----------------------------
+    "tenacity>=8.2.3",             # retries
+    "python-dateutil>=2.8.2",
+]
+
+# ---------------------------------------------------------
+# Optional Dependency Groups
+# ---------------------------------------------------------
+[project.optional-dependencies]
+
+dev = [
+    "pytest>=8.0.0",
+    "pytest-asyncio>=0.23.5",
+    "black>=24.1.1",
+    "isort>=5.13.2",
+    "mypy>=1.8.0",
+    "ruff>=0.2.2",
+]
+
+# ---------------------------------------------------------
+# Tooling Configuration
+# ---------------------------------------------------------
+[tool.black]
+line-length = 100
+target-version = ["py310"]
+
+[tool.isort]
+profile = "black"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pdm]
+distribution = false
+
+
+[tool.pdm.scripts]
+dev = { cmd = "python -m uvicorn src.main:app --reload", env = { PYTHONPATH = "." } }
+start = { cmd = "python -m uvicorn src.main:app --host 0.0.0.0 --port 8000", env = { PYTHONPATH = "." } }
+
+

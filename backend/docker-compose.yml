@@ -1,0 +1,25 @@
+﻿version: '3.9'
+
+services:
+  api:
+    build: .
+    ports:
+      - ""8000:8000""
+    depends_on:
+      - rabbitmq
+      - postgres
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    ports:
+      - ""5672:5672""
+      - ""15672:15672""
+
+  postgres:
+    image: postgres:15
+    environment:
+      POSTGRES_DB: magicbox
+      POSTGRES_USER: magicbox
+      POSTGRES_PASSWORD: magicbox
+    ports:
+      - ""5432:5432""
