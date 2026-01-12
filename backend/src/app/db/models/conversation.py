@@ -16,6 +16,7 @@ class Conversation(Base):
     tenant_id = Column(String, ForeignKey("tenants.id"), nullable=False, index=True)
     project_id = Column(String, ForeignKey("projects.id"), nullable=True, index=True)
     user_id = Column(String, ForeignKey("users.id"), nullable=False, index=True)
+    agent_id = Column(String, ForeignKey("agents.id"), nullable=True, index=True)  # Link to agent
     
     title = Column(String, nullable=True)  # Auto-generated or user-set
     context = Column(Text, nullable=True)  # Conversation context/summary

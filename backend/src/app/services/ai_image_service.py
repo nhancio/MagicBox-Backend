@@ -5,6 +5,8 @@ from typing import Optional, Dict, Any
 from app.config.settings import settings
 from pathlib import Path
 import io
+import tempfile
+import os
 
 # Optional import for new Google Genai SDK
 try:
@@ -69,19 +71,44 @@ class AIImageService:
                     # Text response (if any)
                     continue
                 elif part.inline_data is not None:
-                    # Image data
-                    image = part.as_image()
-                    image_data = image
+                    # Image data - try different methods to extract and save
                     
-                    # Save if output_path provided
+                    # Determine save path
                     if output_path:
-                        image.save(output_path)
-                        saved_path = output_path
+                        output_dir = Path(output_path).parent
+                        if output_dir and not output_dir.exists():
+                            output_dir.mkdir(parents=True, exist_ok=True)
+                        save_path = output_path
                     else:
-                        # Save to temporary location
-                        temp_path = Path(f"/tmp/generated_image_{hash(prompt)}.png")
-                        image.save(str(temp_path))
-                        saved_path = str(temp_path)
+                        temp_dir = Path(tempfile.gettempdir())
+                        temp_dir.mkdir(parents=True, exist_ok=True)
+                        temp_filename = f"generated_image_{abs(hash(prompt))}.png"
+                        save_path = str(temp_dir / temp_filename)
+                    
+                    # Try to save image using different methods
+                    try:
+                        # Method 1: Use as_image() if available (returns PIL Image)
+                        image = part.as_image()
+                        image_data = image
+                        image.save(save_path)
+                        saved_path = save_path
+                    except AttributeError:
+                        # Method 2: Get raw bytes from inline_data
+                        image_bytes = part.inline_data.data
+                        
+                        # Try to decode as PIL Image
+                        if Image:
+                            from io import BytesIO
+                            image = Image.open(BytesIO(image_bytes))
+                            image_data = image
+                            image.save(save_path)
+                            saved_path = save_path
+                        else:
+                            # Save raw bytes directly
+                            with open(save_path, 'wb') as f:
+                                f.write(image_bytes)
+                            image_data = image_bytes
+                            saved_path = save_path
             
             if not image_data:
                 return {

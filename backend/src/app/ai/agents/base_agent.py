@@ -114,7 +114,10 @@ class BaseAgent(ABC):
         # Try to load from JSON file first
         try:
             prompt_data = PromptLoader.load_prompt(self.agent.name)
-            return prompt_data.get("system_prompt", "")
+            if isinstance(prompt_data, dict):
+                return prompt_data.get("system_prompt", "")
+            else:
+                return str(prompt_data) if prompt_data else ""
         except Exception:
             # Fallback to agent's stored system_prompt
             return self.agent.system_prompt or ""

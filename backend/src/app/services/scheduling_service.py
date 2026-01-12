@@ -30,6 +30,7 @@ class SchedulingService:
         is_recurring: bool = False,
         recurrence_pattern: Optional[str] = None,  # "daily", "weekly", "monthly"
         recurrence_end_date: Optional[datetime] = None,
+        artifact_id: Optional[str] = None,  # Link to generated artifact
     ) -> SocialPost:
         """
         Schedule a post for future publishing.
@@ -64,6 +65,7 @@ class SchedulingService:
             id=str(uuid.uuid4()),
             tenant_id=tenant_id,
             social_account_id=account_id,
+            artifact_id=artifact_id,  # Link to artifact if provided
             content=content,
             media_urls=media_urls or [],
             status=PostStatus.SCHEDULED,
@@ -75,6 +77,7 @@ class SchedulingService:
                 "is_recurring": is_recurring,
                 "recurrence_pattern": recurrence_pattern,
                 "recurrence_end_date": recurrence_end_date.isoformat() if recurrence_end_date else None,
+                "artifact_id": artifact_id,  # Also store in metadata for easy access
             }
         )
         

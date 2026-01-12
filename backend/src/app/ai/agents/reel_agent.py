@@ -72,9 +72,19 @@ class ReelAgent(BaseAgent):
                 if input_data.get("style"):
                     video_prompt = f"{video_prompt}, style: {input_data.get('style')}"
                 
+                # Prepare script data for scene planning
+                script_data = {
+                    "hook": result.get("hook", ""),
+                    "script": result.get("script", ""),
+                    "scenes": result.get("scenes", []),
+                    "call_to_action": result.get("call_to_action", ""),
+                }
+                
                 video_result = AIVideoService.generate_video(
                     prompt=video_prompt,
                     output_path=input_data.get("video_output_path"),
+                    duration_seconds=input_data.get("duration_seconds", 30),
+                    script_data=script_data,  # Pass script data for better scene planning
                 )
             
             # Update Langfuse trace

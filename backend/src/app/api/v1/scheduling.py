@@ -19,7 +19,8 @@ router = APIRouter(prefix="/projects/{project_id}/scheduling", tags=["Scheduling
 
 class SchedulePostRequest(BaseModel):
     account_id: str = Field(..., description="Social account ID to post to")
-    content: str = Field(..., description="Post content")
+    content: str = Field(None, description="Post content (required if artifact_id not provided)")
+    artifact_id: Optional[str] = Field(None, description="Artifact ID (generated content) to schedule")
     scheduled_at: datetime = Field(..., description="When to publish (ISO format)")
     media_urls: Optional[List[str]] = Field(None, description="Media URLs")
     notify_before_hours: int = Field(default=1, description="Hours before post to send notification")
@@ -52,6 +53,36 @@ def schedule_post(
     Requires authentication and a project.
     """
     try:
+        # Validate: either content or artifact_id must be provided
+        if not request.content and not request.artifact_id:
+            raise ValueError("Either 'content' or 'artifact_id' must be provided")
+        
+        # If artifact_id is provided, fetch artifact and use its content
+        content = request.content
+        media_urls = request.media_urls or []
+        
+        if request.artifact_id:
+            from app.db.models.artifact import Artifact
+            artifact = db.query(Artifact).filter(Artifact.id == request.artifact_id).first()
+            if not artifact:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail="Artifact not found"
+                )
+            
+            # Use artifact content
+            if artifact.content:
+                content = artifact.content
+            elif artifact.content_data:
+                # Extract text from content_data if available
+                content = str(artifact.content_data.get("content", ""))
+            
+            # Add artifact media URLs
+            if artifact.image_url:
+                media_urls.append(artifact.image_url)
+            if artifact.video_url:
+                media_urls.append(artifact.video_url)
+        
         # Get user's phone number if not provided
         user_phone = request.user_phone
         if not user_phone and hasattr(current_user, 'phone_number'):
@@ -60,11 +91,12 @@ def schedule_post(
         post = SchedulingService.schedule_post(
             db=db,
             account_id=request.account_id,
-            content=request.content,
+            content=content,
             scheduled_at=request.scheduled_at,
-            media_urls=request.media_urls,
+            media_urls=media_urls if media_urls else None,
             notify_before_hours=request.notify_before_hours,
             user_phone=user_phone,
+            artifact_id=request.artifact_id,  # Link artifact to post
         )
         
         return {

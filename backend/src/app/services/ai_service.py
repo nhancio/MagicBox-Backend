@@ -91,26 +91,41 @@ Format the response as JSON with keys: content, hashtags, caption, key_points, p
             )
             content = response.text
             
+            # Clean content - remove markdown code blocks if present
+            cleaned_content = content.strip()
+            if cleaned_content.startswith("```json"):
+                # Remove ```json and ``` markers
+                cleaned_content = cleaned_content.replace("```json", "").replace("```", "").strip()
+            elif cleaned_content.startswith("```"):
+                # Remove generic ``` markers
+                cleaned_content = cleaned_content.replace("```", "").strip()
+            
             # Try to parse as JSON, fallback to plain text
             try:
-                result = json.loads(content)
+                result = json.loads(cleaned_content)
             except json.JSONDecodeError:
                 # If not JSON, create structured response
                 result = {
-                    "content": content,
+                    "content": cleaned_content,
                     "hashtags": [],
-                    "caption": content[:200] + "..." if len(content) > 200 else content,
-                    "key_points": content.split("\n")[:3],
+                    "caption": cleaned_content[:200] + "..." if len(cleaned_content) > 200 else cleaned_content,
+                    "key_points": cleaned_content.split("\n")[:3],
                     "platform_optimized": platform or "general"
                 }
             
+            # Handle hashtags - could be string or list
+            hashtags = result.get("hashtags", [])
+            if isinstance(hashtags, str):
+                # Parse hashtags from string (e.g., "#tag1 #tag2" or "#tag1, #tag2")
+                hashtags = [tag.strip() for tag in hashtags.replace(",", " ").split() if tag.strip().startswith("#")]
+            
             return {
                 "success": True,
-                "content": result.get("content", content),
-                "hashtags": result.get("hashtags", []),
+                "content": result.get("content", cleaned_content),
+                "hashtags": hashtags if isinstance(hashtags, list) else [],
                 "caption": result.get("caption", ""),
                 "key_points": result.get("key_points", []),
-                "platform": platform,
+                "platform": result.get("platform_optimized", platform),
                 "tone": tone,
                 "metadata": {
                     "model": "gemini-3-pro-preview",
@@ -171,12 +186,21 @@ Format as JSON with:
             )
             content = response.text
             
+            # Clean content - remove markdown code blocks if present
+            cleaned_content = content.strip()
+            if cleaned_content.startswith("```json"):
+                # Remove ```json and ``` markers
+                cleaned_content = cleaned_content.replace("```json", "").replace("```", "").strip()
+            elif cleaned_content.startswith("```"):
+                # Remove generic ``` markers
+                cleaned_content = cleaned_content.replace("```", "").strip()
+            
             try:
-                result = json.loads(content)
+                result = json.loads(cleaned_content)
             except json.JSONDecodeError:
                 result = {
                     "hook": hook or f"Let's talk about {topic}",
-                    "script": content,
+                    "script": cleaned_content,
                     "scenes": [],
                     "call_to_action": "Follow for more!"
                 }
@@ -184,14 +208,14 @@ Format as JSON with:
             return {
                 "success": True,
                 "hook": result.get("hook", ""),
-                "script": result.get("script", content),
+                "script": result.get("script", cleaned_content),
                 "scenes": result.get("scenes", []),
                 "call_to_action": result.get("call_to_action", ""),
                 "duration_seconds": duration_seconds,
                 "style": style,
                 "metadata": {
                     "model": "gemini-3-pro-preview",
-                    "estimated_word_count": len(content.split())
+                    "estimated_word_count": len(cleaned_content.split())
                 }
             }
             
